@@ -10,7 +10,7 @@ from src.evaluator import precision_at_k, recall, mean_average_precision
 # CONFIG
 # =========================================================
 
-DEBUG = True          # True = fast testing, False = full run
+DEBUG = False          # True = fast testing, False = full run
 USE_STEMMING = True    # switch experiment here
 MODEL = "bm25"
 RUN_NAME = "BM25_STEM"
@@ -93,11 +93,9 @@ results = run_ranking(
     index=index,
     doc_lengths=doc_lengths,
     model=MODEL,
-    use_stemming=USE_STEMMING,
     top_k=100,
     run_name=RUN_NAME
 )
-
 save_results(results, OUTPUT_FILE, run_name=RUN_NAME)
 
 print(f"Ranking complete. Results saved in {OUTPUT_FILE}")
@@ -133,6 +131,7 @@ print(f"MAP: {map_score:.4f}")
 print(f"Precision@10: {total_p10 / num_queries:.4f}")
 print(f"Recall: {total_recall / num_queries:.4f}")
 print("==============================")
-print("Sample queries:", list(queries.items())[:3])
-print("Sample qrels:", list(qrels.items())[:3])
-print("Index size:", len(index))
+if DEBUG:
+    print("Sample queries:", list(queries.items())[:3])
+    print("Sample qrels:", list(qrels.items())[:3])
+    print("Index size:", len(index))
