@@ -1,4 +1,4 @@
-# Information Retrieval - HW1
+# Information Retrieval
 
 This project implements and compares different information retrieval models using a document collection. The goal is to build a retrieval system that can index documents and process queries using multiple ranking methods.
 
