@@ -6,7 +6,7 @@ from src.evaluator import precision_at_k, recall, mean_average_precision
 
 
 # =========================================================
-# EXPERIMENT CONFIGURATION
+# EXPERIMENT CONFIG
 # =========================================================
 
 EXPERIMENTS = [
@@ -18,7 +18,7 @@ EXPERIMENTS = [
 
 
 # =========================================================
-# LOAD DATA ONCE
+# LOAD DATA
 # =========================================================
 
 print("Loading queries...")
@@ -29,7 +29,7 @@ qrels = load_qrels("data/cranqrel.trec.txt")
 
 
 # =========================================================
-# RESULTS STORAGE
+# STORAGE
 # =========================================================
 
 results_table = []
@@ -68,12 +68,11 @@ for exp in EXPERIMENTS:
         index=index,
         doc_lengths=doc_lengths,
         model=exp["model"],
-        use_stemming=stem,
         top_k=100,
         run_name=exp["name"]
     )
 
-    # save results file
+    # save output
     output_file = f"results/{exp['name'].replace(' ', '_')}.txt"
     save_results(results, output_file, run_name=exp["name"])
 
@@ -84,10 +83,16 @@ for exp in EXPERIMENTS:
     total_p10 = 0
     total_recall = 0
 
-    num_queries = len(results)
+    num_queries = 0
 
     for qid, ranked_docs in results.items():
+
         relevant_docs = qrels.get(qid, set())
+
+        if not relevant_docs:
+            continue
+
+        num_queries += 1
 
         total_p10 += precision_at_k(ranked_docs, relevant_docs, k=10)
         total_recall += recall(ranked_docs, relevant_docs)
@@ -95,27 +100,38 @@ for exp in EXPERIMENTS:
     map_score = mean_average_precision(results, qrels)
 
 
-    # store results
+    # ----------------------------
+    # STORE RESULTS
+    # ----------------------------
     results_table.append([
         exp["name"],
         map_score,
-        total_p10 / num_queries,
-        total_recall / num_queries
+        total_p10 / max(num_queries, 1),
+        total_recall / max(num_queries, 1)
     ])
 
 
 # =========================================================
-# FINAL MARKDOWN TABLE OUTPUT
+# FINAL OUTPUT
 # =========================================================
 
-print("\n\n# ===== FINAL RESULTS =====\n")
+print("\n# ===== FINAL RESULTS =====\n")
 
 print("| Model | MAP | Precision@10 | Recall |")
 print("|------|-----|--------------|--------|")
 
-for row in results_table:
-    model, map_score, p10, rec = row
+for model, map_score, p10, rec in results_table:
+    print(f"| {model} | {map_score:.4f} | {p10:.4f} | {rec:.4f} |")
 
-    print(
-        f"| {model} | {map_score:.4f} | {p10:.4f} | {rec:.4f} |"
-    )
+
+# ----------------------------
+# SAFE DEBUG OUTPUT
+# ----------------------------
+
+sample_qid = next(iter(results), None)
+
+if sample_qid:
+    print("\nSample results:", results[sample_qid][:10])
+
+print("Sample qrels:", list(qrels.items())[:3])
+print("Index size:", len(index))

@@ -23,9 +23,7 @@ def compute_idf(index, total_docs):
 # ----------------------------
 # TF-IDF SCORE
 # ----------------------------
-def tfidf_score(query, doc_id, index, doc_lengths, idf, use_stemming=True):
-
-    query_terms = preprocess(query, use_stemming=use_stemming)
+def tfidf_score(query_terms, doc_id, index, idf):
 
     score = 0.0
 
@@ -34,7 +32,7 @@ def tfidf_score(query, doc_id, index, doc_lengths, idf, use_stemming=True):
         if term in index and doc_id in index[term]:
 
             tf = index[term][doc_id]
-            score += tf * idf.get(term, 0)
+            score += (1 + math.log(tf)) * idf.get(term, 0)
 
     return score
 
@@ -42,15 +40,10 @@ def tfidf_score(query, doc_id, index, doc_lengths, idf, use_stemming=True):
 # ----------------------------
 # BM25 SCORE
 # ----------------------------
-def bm25_score(query, doc_id, index, doc_lengths, idf,
-               k1=1.5, b=0.75, use_stemming=True):
-
-    query_terms = preprocess(query, use_stemming=use_stemming)
-
-    doc_len = doc_lengths.get(doc_id, 0)
-    avg_doc_len = sum(doc_lengths.values()) / len(doc_lengths)
+def bm25_score(query_terms, doc_id, index, doc_lengths, idf, avg_doc_len, k1=1.5, b=0.75):
 
     score = 0.0
+    doc_len = doc_lengths.get(doc_id, 0)
 
     for term in query_terms:
 
@@ -63,10 +56,8 @@ def bm25_score(query, doc_id, index, doc_lengths, idf,
         tf = index[term][doc_id]
         term_idf = idf.get(term, 0)
 
-        numerator = tf * (k1 + 1)
-        denominator = tf + k1 * (1 - b + b * (doc_len / avg_doc_len))
-
-        score += term_idf * (numerator / denominator)
+        denom = tf + k1 * (1 - b + b * (doc_len / avg_doc_len))
+        score += term_idf * ((tf * (k1 + 1)) / denom)
 
     return score
 
@@ -74,20 +65,18 @@ def bm25_score(query, doc_id, index, doc_lengths, idf,
 # ----------------------------
 # RANK DOCUMENTS
 # ----------------------------
-def rank_documents(query, index, doc_lengths, model="bm25", use_stemming=True, top_k=10):
+def rank_documents(query_terms, index, doc_lengths, idf, model="bm25", top_k=10):
 
-    docs = list(doc_lengths.keys())
-    idf = compute_idf(index, len(docs))
-
+    avg_doc_len = sum(doc_lengths.values()) / len(doc_lengths)
     scores = []
 
-    for doc_id in docs:
+    for doc_id in doc_lengths:
 
         if model == "bm25":
-            score = bm25_score(query, doc_id, index, doc_lengths, idf, use_stemming=use_stemming)
+            score = bm25_score(query_terms, doc_id, index, doc_lengths, idf, avg_doc_len)
 
         else:
-            score = tfidf_score(query, doc_id, index, doc_lengths, idf, use_stemming=use_stemming)
+            score = tfidf_score(query_terms, doc_id, index, idf)
 
         scores.append((doc_id, score))
 

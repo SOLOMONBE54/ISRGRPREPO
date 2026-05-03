@@ -1,44 +1,34 @@
-# src/preprocess.py
-
 import re
-from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
+from nltk.corpus import stopwords
 
-
-stop_words = set(stopwords.words("english"))
+# ----------------------------
+# INIT
+# ----------------------------
 stemmer = PorterStemmer()
+stop_words = set(stopwords.words("english"))
 
 
-# -----------------------------
-# TOKENIZATION
-# -----------------------------
-def tokenize(text):
+# ----------------------------
+# PREPROCESS FUNCTION
+# ----------------------------
+def preprocess(text, use_stemming=True, remove_stopwords=True):
+    """
+    Clean + tokenize + optional stemming + optional stopword removal
+    """
+
+    # 1. lowercase
     text = text.lower()
-    text = re.sub(r"[^a-z\s]", " ", text)
-    return text.split()
 
+    # 2. remove non-alphabetic noise
+    tokens = re.findall(r"[a-z]+", text)
 
-# -----------------------------
-# CORE PREPROCESS FUNCTION
-# -----------------------------
-def preprocess(text, use_stemming=True):
-    """
-    Preprocess text with optional stemming
-    """
+    # 3. remove stopwords (IMPORTANT for MAP improvement)
+    if remove_stopwords:
+        tokens = [t for t in tokens if t not in stop_words]
 
-    tokens = tokenize(text)
+    # 4. stemming (optional)
+    if use_stemming:
+        tokens = [stemmer.stem(t) for t in tokens]
 
-    processed = []
-
-    for token in tokens:
-        if token in stop_words:
-            continue
-        if len(token) < 2:
-            continue
-
-        if use_stemming:
-            token = stemmer.stem(token)
-
-        processed.append(token)
-
-    return processed
+    return tokens
