@@ -5,19 +5,21 @@ from collections import defaultdict, Counter
 from src.preprocess import preprocess
 
 
-# ----------------------------
-# PATH SETUP
-# ----------------------------
+# =========================================================
+# PATH SETUP (FIXED + CONSISTENT)
+# =========================================================
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 DATA_DIR = os.path.join(BASE_DIR, "..", "data")
 RESULTS_DIR = os.path.join(BASE_DIR, "..", "results", "indexing")
 
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
 
-# ----------------------------
-# DOCUMENT PARSER (Cranfield format)
-# ----------------------------
+# =========================================================
+# PARSER (CRANFIELD FORMAT)
+# =========================================================
 def parse_documents(file_path):
     docs = []
 
@@ -68,13 +70,10 @@ def parse_documents(file_path):
     return docs
 
 
-# ----------------------------
+# =========================================================
 # INDEX BUILDER
-# ----------------------------
-def build_index(docs, use_stemming=True):
-    """
-    Builds inverted index + document lengths
-    """
+# =========================================================
+def build_index(docs, use_stemming: bool):
 
     inverted_index = defaultdict(dict)
     doc_lengths = {}
@@ -82,10 +81,9 @@ def build_index(docs, use_stemming=True):
     for doc in docs:
 
         docno = doc["docno"]
-
         full_text = " ".join(doc["title"] + doc["text"])
 
-        # ALL preprocessing handled externally
+        # IMPORTANT: consistent preprocessing
         tokens = preprocess(full_text, use_stemming=use_stemming)
 
         doc_lengths[docno] = len(tokens)
@@ -98,22 +96,22 @@ def build_index(docs, use_stemming=True):
     return inverted_index, doc_lengths
 
 
-# ----------------------------
-# SAVE HELPER
-# ----------------------------
-def save(obj, path):
+# =========================================================
+# SAVE HELPERS
+# =========================================================
+def save_pickle(obj, path):
     with open(path, "wb") as f:
         pickle.dump(obj, f)
 
 
-# ----------------------------
+# =========================================================
 # MAIN PIPELINE
-# ----------------------------
+# =========================================================
 if __name__ == "__main__":
 
     all_docs = []
 
-    # load all files in data folder
+    # Load all documents
     for filename in os.listdir(DATA_DIR):
         file_path = os.path.join(DATA_DIR, filename)
 
@@ -123,26 +121,35 @@ if __name__ == "__main__":
     print(f"Loaded {len(all_docs)} documents")
 
 
-    # ----------------------------
+    # =====================================================
     # NO STEM INDEX
-    # ----------------------------
-    print("Building NO-STEM index...")
+    # =====================================================
+    print("\nBuilding NO-STEM index...")
 
     index_no_stem, len_no_stem = build_index(all_docs, use_stemming=False)
 
-    save(index_no_stem, os.path.join(RESULTS_DIR, "index_no_stem.pkl"))
-    save(len_no_stem, os.path.join(RESULTS_DIR, "doc_lengths_no_stem.pkl"))
+    save_pickle(index_no_stem, os.path.join(RESULTS_DIR, "index_no_stem.pkl"))
+    save_pickle(len_no_stem, os.path.join(RESULTS_DIR, "doc_lengths_no_stem.pkl"))
+
+    print("NO-STEM index saved.")
 
 
-    # ----------------------------
+    # =====================================================
     # STEM INDEX
-    # ----------------------------
-    print("Building STEM index...")
+    # =====================================================
+    print("\nBuilding STEM index...")
 
     index_stem, len_stem = build_index(all_docs, use_stemming=True)
 
-    save(index_stem, os.path.join(RESULTS_DIR, "index_stem.pkl"))
-    save(len_stem, os.path.join(RESULTS_DIR, "doc_lengths_stem.pkl"))
+    save_pickle(index_stem, os.path.join(RESULTS_DIR, "index_stem.pkl"))
+    save_pickle(len_stem, os.path.join(RESULTS_DIR, "doc_lengths_stem.pkl"))
+
+    print("STEM index saved.")
 
 
-    print("Indexing complete. Files saved in results/indexing/")
+    # =====================================================
+    # FINAL CHECK (IMPORTANT DEBUG SAFETY)
+    # =====================================================
+    print("\n===== INDEX BUILD COMPLETE =====")
+    print("Files created in results/indexing/")
+    print(os.listdir(RESULTS_DIR))
