@@ -1,6 +1,6 @@
-# 📄 ISR Project — Cranfield Information Retrieval System
+# ISR Project — Cranfield Information Retrieval System
 
-## 📌 Overview
+##  Overview
 
 This project implements an **Information Retrieval (IR) system from scratch** using the Cranfield 1400 dataset.  
 It includes document parsing, indexing, ranking, and evaluation using standard IR metrics.
@@ -14,7 +14,7 @@ with both:
 
 ---
 
-## 📂 Dataset
+##  Dataset
 
 The system uses the Cranfield dataset:
 
@@ -30,7 +30,7 @@ Each document contains:
 
 ---
 
-## 🏗️ System Architecture
+##  System Architecture
 
 ### 1. Parsing Module
 - Extracts documents and queries from XML files
@@ -58,7 +58,7 @@ Each document contains:
 
 ---
 
-## 🔍 Indexing Strategy
+##  Indexing Strategy
 
 ### ✔ No-Stemming Index
 - Original word forms preserved
@@ -70,7 +70,7 @@ Each document contains:
 
 ---
 
-## 📊 Ranking Models
+##  Ranking Models
 
 ### BM25
 - Uses term frequency saturation
@@ -83,7 +83,7 @@ Each document contains:
 
 ---
 
-## 📈 Experimental Setup
+##  Experimental Setup
 
 | Model | Stemming |
 |------|----------|
@@ -96,7 +96,7 @@ All experiments use identical queries and qrels for fair comparison.
 
 ---
 
-## 📊 Results
+##  Results
 
 | Model | MAP | Precision@10 | Recall |
 |------|-----|--------------|--------|
@@ -107,7 +107,7 @@ All experiments use identical queries and qrels for fair comparison.
 
 ---
 
-## 📌 Discussion
+##  Discussion
 
 - BM25 performs slightly better than TF-IDF overall.
 - Stemming has minimal impact on MAP.
@@ -116,7 +116,7 @@ All experiments use identical queries and qrels for fair comparison.
 
 ---
 
-## ⚠️ Challenges
+##  Challenges
 
 - XML parsing inconsistencies in Cranfield dataset
 - Maintaining consistent preprocessing across modules
@@ -126,7 +126,7 @@ All experiments use identical queries and qrels for fair comparison.
 
 ---
 
-## 🎯 Conclusion
+##  Conclusion
 
 This project demonstrates a complete IR pipeline built from scratch, including:
 
@@ -142,7 +142,7 @@ This project demonstrates a complete IR pipeline built from scratch, including:
 
 ---
 
-## 🚀 Future Improvements
+##  Future Improvements
 
 - Stopword removal tuning
 - BM25 parameter optimization (k1, b)
@@ -152,7 +152,7 @@ This project demonstrates a complete IR pipeline built from scratch, including:
 
 ---
 
-## 👥 Group Members
+##  Group Members
 
 | Name | Student ID |
 |------|-----------|
@@ -165,7 +165,7 @@ This project demonstrates a complete IR pipeline built from scratch, including:
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```text
 src/
