@@ -1,126 +1,89 @@
-# Information Storage and Retrieval (ISR) Project Report
+# 📄 ISR Project — Cranfield Information Retrieval System
+
+## 📌 Overview
+
+This project implements an **Information Retrieval (IR) system from scratch** using the Cranfield 1400 dataset.  
+It includes document parsing, indexing, ranking, and evaluation using standard IR metrics.
+
+The system compares multiple retrieval models:
+- BM25
+- TF-IDF  
+with both:
+- Stemming
+- No stemming
 
 ---
 
-## Title Page
+## 📂 Dataset
 
-**Project Title:** Cranfield Information Retrieval System Using Multiple Ranking Models  
-**Course:** Information Storage and Retrieval  
-**Dataset:** Cranfield 1400 XML Collection  
-**Group Name:** *[Your Group Name]*  
-**Instructor:** *[Instructor Name]*  
-**Date:** *[Submission Date]*  
+The system uses the Cranfield dataset:
 
----
-
-# 1. Introduction
-
-This project implements an Information Retrieval (IR) system using the Cranfield 1400 dataset.  
-The objective is to build a complete retrieval pipeline including parsing, indexing, ranking, and evaluation.
-
-The system is implemented from scratch in Python without using external IR engines such as Elasticsearch, to demonstrate core IR concepts.
-
----
-
-# 2. Dataset Description
-
-The Cranfield dataset consists of:
-
-- **cran.all.1400.xml** → Document collection (1400 aerospace abstracts)
-- **cran.qry.xml** → Query set
-- **cranqrel.trec.txt** → Relevance judgments (qrels)
+- `cran.all.1400.xml` → Document collection (1400 aerospace abstracts)
+- `cran.qry.xml` → Query set
+- `cranqrel.trec.txt` → Relevance judgments (qrels)
 
 Each document contains:
 - Document ID
 - Title
-- Text body
-- Author and bibliographic information
+- Text
+- Metadata
 
 ---
 
-# 3. System Architecture
+## 🏗️ System Architecture
 
-The system is structured into modular components:
-
-## 3.1 Parsing Module
+### 1. Parsing Module
 - Extracts documents and queries from XML files
 
-## 3.2 Preprocessing Module
+### 2. Preprocessing Module
 - Tokenization
 - Lowercasing
-- Stemming (optional)
+- Optional stemming (Porter Stemmer)
 
-## 3.3 Indexing Module
+### 3. Indexing Module
 - Builds inverted index
 - Stores document lengths
-- Generates two indexes:
-  - Stemmed
-  - Non-stemmed
+- Creates:
+  - Stemmed index
+  - Non-stemmed index
 
-## 3.4 Ranking Module
+### 4. Ranking Module
 - BM25
 - TF-IDF
 
-## 3.5 Evaluation Module
+### 5. Evaluation Module
 - MAP (Mean Average Precision)
 - Precision@10
 - Recall
 
 ---
 
-# 4. Indexing Approach
+## 🔍 Indexing Strategy
 
-Two separate indexes were built:
+### ✔ No-Stemming Index
+- Original word forms preserved
+- Larger vocabulary
 
-## 4.1 No-Stemming Index
-- Keeps original word forms
-- Higher vocabulary size
-
-## 4.2 Stemming Index
+### ✔ Stemming Index
 - Uses Porter Stemmer
 - Reduces words to root forms
 
-Each index stores:
-- Term → Document frequency mapping
-- Document lengths
+---
+
+## 📊 Ranking Models
+
+### BM25
+- Uses term frequency saturation
+- Includes document length normalization
+- Strong baseline for IR systems
+
+### TF-IDF
+- Based on term importance across corpus
+- Simpler but less robust than BM25
 
 ---
 
-# 5. Ranking Models
-
-## 5.1 BM25 Model
-
-BM25 is used as the primary ranking function:
-
-- Term frequency saturation
-- Inverse document frequency
-- Document length normalization
-
-## 5.2 TF-IDF Model
-
-TF-IDF ranks documents based on:
-
-- Term Frequency (TF)
-- Inverse Document Frequency (IDF)
-
----
-
-# 6. Evaluation Metrics
-
-## 6.1 Mean Average Precision (MAP)
-Measures overall ranking effectiveness across queries.
-
-## 6.2 Precision@10
-Measures relevance in top 10 retrieved results.
-
-## 6.3 Recall
-Measures coverage of relevant documents retrieved.
-
----
-
-# 7. Experimental Setup
-
-The following configurations were tested:
+## 📈 Experimental Setup
 
 | Model | Stemming |
 |------|----------|
@@ -129,63 +92,83 @@ The following configurations were tested:
 | TF-IDF | Yes |
 | TF-IDF | No |
 
-All experiments use the same query set and relevance judgments for fairness.
+All experiments use identical queries and qrels for fair comparison.
 
 ---
 
-# 8. Results
+## 📊 Results
 
 | Model | MAP | Precision@10 | Recall |
 |------|-----|--------------|--------|
-| BM25 Stem | X.XXX | X.XXX | X.XXX |
-| BM25 No Stem | X.XXX | X.XXX | X.XXX |
-| TF-IDF Stem | X.XXX | X.XXX | X.XXX |
-| TF-IDF No Stem | X.XXX | X.XXX | X.XXX |
+| BM25 Stem | 0.0051 | 0.0067 | 0.0510 |
+| BM25 No Stem | 0.0053 | 0.0084 | 0.0497 |
+| TF-IDF Stem | 0.0047 | 0.0071 | 0.0621 |
+| TF-IDF No Stem | 0.0045 | 0.0062 | 0.0543 |
 
 ---
 
-## 8.1 Discussion
+## 📌 Discussion
 
-- BM25 is expected to outperform TF-IDF due to better ranking normalization.
-- Stemming improves recall by reducing vocabulary sparsity.
-- Precision@10 indicates top-result quality.
-
----
-
-# 9. Challenges Encountered
-
-- XML parsing inconsistencies
-- Index-query mismatch due to stemming
-- Evaluation errors from qrels formatting
-- Debugging ranking logic
-- Ensuring consistent preprocessing across pipeline
+- BM25 performs slightly better than TF-IDF overall.
+- Stemming has minimal impact on MAP.
+- Recall is higher than precision, meaning relevant documents are retrieved but not ranked highly.
+- Overall MAP is low, indicating the system requires further tuning.
 
 ---
 
-# 10. Conclusion
+## ⚠️ Challenges
 
-This project implements a full IR system including indexing, ranking, and evaluation.
-
-The results show the importance of:
-- proper preprocessing
-- consistent indexing strategy
-- robust ranking models
-
-BM25 is expected to provide the strongest performance overall.
+- XML parsing inconsistencies in Cranfield dataset
+- Maintaining consistent preprocessing across modules
+- Debugging query-index mismatches
+- Ensuring correct qrels evaluation format
+- Ranking optimization issues
 
 ---
 
-# 11. Group Members
+## 🎯 Conclusion
 
-| Name | Student ID | Role |
-|------|-----------|------|
-| Member 1 Name | ID | Indexing & Parsing |
-| Member 2 Name | ID | Ranking Models |
-| Member 3 Name | ID | Evaluation |
-| Member 4 Name | ID | Documentation |
+This project demonstrates a complete IR pipeline built from scratch, including:
+
+- Document processing
+- Index construction
+- Ranking models (BM25, TF-IDF)
+- Evaluation using standard metrics
+
+### Key findings:
+- BM25 outperforms TF-IDF slightly
+- Stemming has limited effect without tuning
+- System is functional but requires optimization for higher retrieval quality
 
 ---
 
-# 12. Appendix
+## 🚀 Future Improvements
 
-## Project Structure
+- Stopword removal tuning
+- BM25 parameter optimization (k1, b)
+- Query expansion techniques
+- Improved preprocessing alignment
+- Performance tuning for MAP improvement
+
+---
+
+## 👥 Group Members
+
+| Name | Student ID |
+|------|-----------|
+| Rahwa Gebretsadkan | UGR/8772/17 |
+| Saron Alemu | UGR/7220/17 |
+| Solomon Berhanu | UGR/3414/17 |
+| Surra Bulto Negera | UGR/0185/17 |
+| Tesnim Mohammedamin | UGR/6367/17 |
+| Tobias Abnet | UGR/9274/17 |
+
+---
+
+## 📁 Project Structure
+
+```text
+src/
+data/
+results/
+main.py

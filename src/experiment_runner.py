@@ -1,135 +1,121 @@
 import pickle
 
 from src.parser import parse_queries, load_qrels
-from src.preprocess import preprocess
 from src.ranker import run_ranking, save_results
 from src.evaluator import precision_at_k, recall, mean_average_precision
 
 
 # =========================================================
-# CONFIG
+# EXPERIMENT CONFIGURATION
 # =========================================================
 
-DEBUG = False          # True = fast testing, False = full run
-USE_STEMMING = True    # switch experiment here
-MODEL = "bm25"
-RUN_NAME = "BM25_STEM"
-
-
-# =========================================================
-# FILE PATHS
-# =========================================================
-
-INDEX_FILE = "results/indexing/index_stem.pkl" if USE_STEMMING else "results/indexing/index_no_stem.pkl"
-LENGTH_FILE = "results/indexing/doc_lengths_stem.pkl" if USE_STEMMING else "results/indexing/doc_lengths_no_stem.pkl"
-OUTPUT_FILE = f"results/{MODEL}_{'stem' if USE_STEMMING else 'no_stem'}.txt"
+EXPERIMENTS = [
+    {"model": "bm25", "stem": True,  "name": "BM25 Stem"},
+    {"model": "bm25", "stem": False, "name": "BM25 No Stem"},
+    {"model": "tfidf", "stem": True,  "name": "TF-IDF Stem"},
+    {"model": "tfidf", "stem": False, "name": "TF-IDF No Stem"},
+]
 
 
 # =========================================================
-# LOAD INDEX
-# =========================================================
-
-print("Loading index...")
-
-with open(INDEX_FILE, "rb") as f:
-    index = pickle.load(f)
-
-with open(LENGTH_FILE, "rb") as f:
-    doc_lengths = pickle.load(f)
-
-print("Index loaded.")
-
-
-# =========================================================
-# LOAD QUERIES
+# LOAD DATA ONCE
 # =========================================================
 
 print("Loading queries...")
-
 queries = parse_queries("data/cran.qry.xml")
 
-print(f"{len(queries)} queries loaded.")
-
-
-# =========================================================
-# LOAD QRELS
-# =========================================================
-
 print("Loading qrels...")
-
 qrels = load_qrels("data/cranqrel.trec.txt")
 
-print(f"{len(qrels)} qrels loaded.")
+
+# =========================================================
+# RESULTS STORAGE
+# =========================================================
+
+results_table = []
 
 
 # =========================================================
-# DEBUG MODE (FAST TESTING ONLY)
+# RUN EXPERIMENTS
 # =========================================================
 
-if DEBUG:
+for exp in EXPERIMENTS:
 
-    print("\n===== DEBUG MODE =====")
+    print("\n===================================")
+    print(f"Running: {exp['name']}")
+    print("===================================")
 
-    sample_query = next(iter(queries.values()))
-    tokens = preprocess(sample_query, use_stemming=USE_STEMMING)
+    stem = exp["stem"]
 
-    print("Sample query tokens:", tokens)
+    # ----------------------------
+    # LOAD INDEX
+    # ----------------------------
+    index_path = f"results/indexing/index_{'stem' if stem else 'no_stem'}.pkl"
+    length_path = f"results/indexing/doc_lengths_{'stem' if stem else 'no_stem'}.pkl"
 
-    for t in tokens[:5]:
-        print(t, "->", t in index)
+    with open(index_path, "rb") as f:
+        index = pickle.load(f)
 
-    print("\nSkipping ranking and evaluation.")
-    exit()
+    with open(length_path, "rb") as f:
+        doc_lengths = pickle.load(f)
+
+
+    # ----------------------------
+    # RUN RANKING
+    # ----------------------------
+    results = run_ranking(
+        queries=queries,
+        index=index,
+        doc_lengths=doc_lengths,
+        model=exp["model"],
+        use_stemming=stem,
+        top_k=100,
+        run_name=exp["name"]
+    )
+
+    # save results file
+    output_file = f"results/{exp['name'].replace(' ', '_')}.txt"
+    save_results(results, output_file, run_name=exp["name"])
+
+
+    # ----------------------------
+    # EVALUATION
+    # ----------------------------
+    total_p10 = 0
+    total_recall = 0
+
+    num_queries = len(results)
+
+    for qid, ranked_docs in results.items():
+        relevant_docs = qrels.get(qid, set())
+
+        total_p10 += precision_at_k(ranked_docs, relevant_docs, k=10)
+        total_recall += recall(ranked_docs, relevant_docs)
+
+    map_score = mean_average_precision(results, qrels)
+
+
+    # store results
+    results_table.append([
+        exp["name"],
+        map_score,
+        total_p10 / num_queries,
+        total_recall / num_queries
+    ])
 
 
 # =========================================================
-# RUN RANKING
+# FINAL MARKDOWN TABLE OUTPUT
 # =========================================================
 
-print("\nRunning ranking...")
+print("\n\n# ===== FINAL RESULTS =====\n")
 
-results = run_ranking(
-    queries=queries,
-    index=index,
-    doc_lengths=doc_lengths,
-    model=MODEL,
-    use_stemming=USE_STEMMING,
-    top_k=100,
-    run_name=RUN_NAME
-)
+print("| Model | MAP | Precision@10 | Recall |")
+print("|------|-----|--------------|--------|")
 
-save_results(results, OUTPUT_FILE, run_name=RUN_NAME)
+for row in results_table:
+    model, map_score, p10, rec = row
 
-print(f"Ranking complete. Results saved in {OUTPUT_FILE}")
-
-
-# =========================================================
-# EVALUATION
-# =========================================================
-
-print("\nRunning evaluation...")
-
-total_p10 = 0
-total_recall = 0
-
-num_queries = len(results)
-
-for qid, ranked_docs in results.items():
-
-    relevant_docs = qrels.get(qid, set())
-
-    total_p10 += precision_at_k(ranked_docs, relevant_docs, k=10)
-    total_recall += recall(ranked_docs, relevant_docs)
-
-map_score = mean_average_precision(results, qrels)
-
-
-# =========================================================
-# FINAL OUTPUT
-# =========================================================
-
-print("\n===== EVALUATION RESULTS =====")
-print(f"MAP: {map_score:.4f}")
-print(f"Precision@10: {total_p10 / num_queries:.4f}")
-print(f"Recall: {total_recall / num_queries:.4f}")
-print("==============================")
+    print(
+        f"| {model} | {map_score:.4f} | {p10:.4f} | {rec:.4f} |"
+    )
